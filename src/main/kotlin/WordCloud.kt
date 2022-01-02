@@ -38,24 +38,25 @@ object WordCloud : KotlinPlugin(
         author("LaoLittle")
     }
 ) {
-    private val wordCloudPerm = registerPermission(
-        "monitor",
-        "生成词云"
-    )
     private val dataSource = DruidDataSource()
     private val db: Database
     private var dayAndYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
     override fun onEnable() {
+        val wordCloudPerm = registerPermission(
+            "monitor",
+            "生成词云"
+        )
         logger.info { "Plugin loaded" }
         GlobalEventChannel.subscribeAlways<GroupMessageEvent>(
             priority = EventPriority.MONITOR
         ) {
-            if (subject.permitteeId.hasPermission(wordCloudPerm)){
+            if (subject.permitteeId.hasPermission(wordCloudPerm)) {
                 val database = MessageData(subject.id)
-                transaction {
+                transaction(db) {
                     SchemaUtils.create(database)
                     message.forEach { single ->
-                        val filter = (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能") )&& (single.content.isNotBlank())
+                        val filter =
+                            (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能")) && (single.content.isNotBlank())
                         if (filter)
                             database.insert { data ->
                                 data[time] = dayAndYear
@@ -74,28 +75,28 @@ object WordCloud : KotlinPlugin(
                 foo.forEach {
                     words.add(it.word)
                 }
-                WordCloudAnn(words).wordCloud.use { subject.sendImage(it) }
+                WordCloudDrawer(words).wordCloud.use { subject.sendImage(it) }
             }
         }
     }
 
-    private fun AbstractJvmPlugin.registerPermission(name: String, description: String)
-        = PermissionService.INSTANCE.register(permissionId(name), description, parentPermission)
+    private fun AbstractJvmPlugin.registerPermission(name: String, description: String) =
+        PermissionService.INSTANCE.register(permissionId(name), description, parentPermission)
 
 
     init {
         launch(Dispatchers.IO) {
-            while (true){
-                delay(60*60*1000)
+            while (true) {
+                delay(2 * 60 * 60 * 1000)
+                logger.info { "time updated" }
                 dayAndYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
             }
         }
-        dataSource.url = "jdbc:sqlite:${dataFolder}/messageData.sqlite"
+        dataSource.url = "jdbc:sqlite:$dataFolder/messageData.sqlite"
         dataSource.driverClassName = "org.sqlite.JDBC"
         db = Database.connect(dataSource as DataSource)
         TransactionManager.manager.defaultIsolationLevel =
             Connection.TRANSACTION_SERIALIZABLE
         WordCloudConfig.reload()
-        dataFolder
     }
 }
