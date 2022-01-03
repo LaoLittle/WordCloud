@@ -32,7 +32,7 @@ object WordCloud : KotlinPlugin(
     val db: Database
     var dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
     const val eight = 8 * 60 * 60 * 1000L
-    const val eighteen = 18 * 60 * 60 * 1000L
+    val time = (WordCloudConfig.time) * 60 * 60 * 1000L
     var bot: Bot? = null
     override fun onEnable() {
         val wordCloudPerm = registerPermission(
@@ -40,7 +40,7 @@ object WordCloud : KotlinPlugin(
             "生成词云"
         )
         val now = System.currentTimeMillis()
-        val task = if ((now > (todayTimeMillis + eight)) && (now < (todayTimeMillis + eighteen))) GroupMessageRecorder(
+        val task = if ((now > (todayTimeMillis + eight)) && (now < (todayTimeMillis + time))) GroupMessageRecorder(
             wordCloudPerm
         )
         else RecorderCompleter(wordCloudPerm)

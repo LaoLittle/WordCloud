@@ -47,14 +47,14 @@ class WordCloudRenderer(private val words: List<String>) {
                 Color(0x65c294)
             )
         )
-        // wordCloud.setBackground(CircleBackground(300))
+        //wordCloud.setBackground(CircleBackground(300))
         wordCloud.setBackground(RectangleBackground(dimension))
         wordCloud.setFontScalar(SqrtFontScalar(WordCloudConfig.min, WordCloudConfig.max))
         wordCloud.setBackgroundColor(Color(255, 255, 255))
 
         wordCloud.build(wordFrequencyList)
         val output = ByteArrayOutputStream()
-        wordCloud.writeToStream("png", output)
-        return output.toByteArray()
+        wordCloud.writeToStreamAsPNG(output)
+        output.use { return it.toByteArray() }
     }
 }

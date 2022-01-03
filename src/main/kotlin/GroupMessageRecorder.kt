@@ -48,7 +48,7 @@ class GroupMessageRecorder(
             }
         }
         val task = RecorderCompleter(perm, listener)
-        Timer().schedule(task, Date(RecorderCompleter.todayTimeMillis + WordCloud.eighteen))
+        Timer().schedule(task, Date(RecorderCompleter.todayTimeMillis + WordCloud.time))
     }
 
     override fun cancel(): Boolean {

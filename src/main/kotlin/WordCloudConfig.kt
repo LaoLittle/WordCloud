@@ -15,6 +15,9 @@ object WordCloudConfig : AutoSavePluginConfig("Config") {
     @ValueDescription("指定字体文件 default为默认 (微软雅黑)")
     val font by value("default")
 
+    @ValueDescription("指定生成时间 (小时)")
+    val time by value(18)
+
     val fontOrigin: Array<Font> =
         (if (font == "default") Font.createFonts(WordCloud.javaClass.getResourceAsStream("/msyh.ttc"))
         else Font.createFonts(WordCloud.dataFolder.resolve(font)))
