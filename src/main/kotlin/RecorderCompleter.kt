@@ -17,7 +17,7 @@ import java.util.*
 
 /**
  * 负责创建定时任务在8点启用[GroupMessageRecorder]并读取数据库绘制词云
- * @see WordCloudDrawer
+ * @see WordCloudRenderer
  * */
 class RecorderCompleter(
     private val perm: Permission,
@@ -47,7 +47,7 @@ class RecorderCompleter(
                         foo.forEach { bar ->
                             words.add(bar.word)
                         }
-                        WordCloudDrawer(words).wordCloud.use { res ->
+                        WordCloudRenderer(words).wordCloud.use { res ->
                             WordCloud.launch {
                                 group.sendMessage("今日词云")
                                 delay(1_000)

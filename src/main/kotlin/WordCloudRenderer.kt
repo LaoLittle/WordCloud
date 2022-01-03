@@ -15,7 +15,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.io.ByteArrayOutputStream
 
-class WordCloudDrawer(private val words: List<String>) {
+class WordCloudRenderer(private val words: List<String>) {
     val wordCloud: ExternalResource
         get() {
             return words.getWordCloud().toExternalResource()
