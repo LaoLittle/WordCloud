@@ -9,10 +9,7 @@ import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.utils.info
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -47,8 +44,8 @@ class RecorderCompleter(
                         }
                         val foo = JiebaSegmenter().process(allContents.toString(), JiebaSegmenter.SegMode.SEARCH)
                         val words = mutableListOf<String>()
-                        foo.forEach { seg ->
-                            words.add(seg.word)
+                        foo.forEach { bar ->
+                            words.add(bar.word)
                         }
                         WordCloudDrawer(words).wordCloud.use { res ->
                             WordCloud.launch {
@@ -58,6 +55,7 @@ class RecorderCompleter(
                             }
                         }
                     }
+                    table.deleteWhere { table.time eq (dayWithYear - 2) }
                 }
             }
         }
