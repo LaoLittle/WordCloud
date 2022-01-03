@@ -18,16 +18,16 @@ import java.io.ByteArrayOutputStream
 class WordCloudDrawer(private val words: List<String>) {
     val wordCloud: ExternalResource
         get() {
-            return getWordCloud(words).toExternalResource()
+            return words.getWordCloud().toExternalResource()
         }
 
-    private fun getWordCloud(words: List<String>): ByteArray {
+    private fun List<String>.getWordCloud(): ByteArray {
         val frequencyAnalyzer = FrequencyAnalyzer()
         frequencyAnalyzer.setWordFrequenciesToReturn(100)
         frequencyAnalyzer.setMinWordLength(2)
         frequencyAnalyzer.setWordTokenizer(ChineseWordTokenizer())
 
-        val wordFrequencyList = frequencyAnalyzer.load(words)
+        val wordFrequencyList = frequencyAnalyzer.load(this)
         val dimension = Dimension(600, 600)
         val wordCloud = WordCloud(dimension, CollisionMode.PIXEL_PERFECT)
 

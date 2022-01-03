@@ -12,10 +12,15 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.info
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 
+/**
+ * 创建监听器监听群消息事件并写入数据库, 并创建定时任务在18点启用[RecorderCompleter]
+ * */
 class GroupMessageRecorder(
     private val perm: Permission
 ) : TimerTask() {
@@ -28,6 +33,7 @@ class GroupMessageRecorder(
             if (subject.permitteeId.hasPermission(perm)) {
                 val database = MessageData(subject.id)
                 newSuspendedTransaction(Dispatchers.IO, WordCloud.db) {
+                    addLogger(StdOutSqlLogger)
                     SchemaUtils.create(database)
                     message.forEach { single ->
                         val filter =
@@ -41,8 +47,8 @@ class GroupMessageRecorder(
                 }
             }
         }
-        val task = RecorderStarter(perm, listener)
-        Timer().schedule(task, Date(RecorderStarter.todayTimeMillis + WordCloud.eighteen))
+        val task = RecorderCompleter(perm, listener)
+        Timer().schedule(task, Date(RecorderCompleter.todayTimeMillis + WordCloud.eighteen))
     }
 
     override fun cancel(): Boolean {
