@@ -11,6 +11,7 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.BotOnlineEvent
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.utils.info
+import net.mamoe.mirai.utils.verbose
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.laolittle.plugin.RecorderCompleter.Companion.todayTimeMillis
@@ -63,6 +64,7 @@ object WordCloudPlugin : KotlinPlugin(
                 wordCloudDir.listFiles()?.forEach {
                     if (it.isFile) it.delete()
                 }
+                logger.verbose { "缓存已清理" }
             }
         }
         val aDay = 24 * 60 * 60 * 1000L

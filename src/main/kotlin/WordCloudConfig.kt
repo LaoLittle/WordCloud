@@ -12,6 +12,9 @@ object WordCloudConfig : AutoSavePluginConfig("Config") {
     @ValueDescription("最小单词")
     val min by value(10)
 
+    @ValueDescription("词数限制")
+    val wordLimit by value(500)
+
     @ValueDescription("指定字体文件 default为默认 (微软雅黑)")
     val font by value("default")
 

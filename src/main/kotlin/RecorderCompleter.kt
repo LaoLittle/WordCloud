@@ -1,17 +1,17 @@
 package org.laolittle.plugin
 
 import com.huaban.analysis.jieba.JiebaSegmenter
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.permission.Permission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.event.Listener
-import net.mamoe.mirai.message.data.sendTo
-import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.info
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.laolittle.plugin.JiebaSegmenter as JiebaObj
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDate
@@ -44,20 +44,15 @@ class RecorderCompleter(
                     SchemaUtils.create(table)
                     val results = table.select(sql)
                     if (!results.empty()) {
-                        val allContents = StringBuffer()
-                        results.forEach { single ->
-                            allContents.append(single[table.content])
-                        }
-                        val foo = JiebaSegmenter().process(allContents.toString(), JiebaSegmenter.SegMode.SEARCH)
                         val words = mutableListOf<String>()
-                        foo.forEach { bar ->
-                            words.add(bar.word)
+                        results.forEach { single ->
+                            val foo = JiebaObj.process(single[table.content], JiebaSegmenter.SegMode.SEARCH)
+                            foo.forEach { bar ->
+                                words.add(bar.word)
+                            }
                         }
                         val file = FileOutputStream(filePath)
                         file.write(WordCloudRenderer(words).wordCloud)
-                        if (group.permitteeId.hasPermission(perm)) pluginMain.launch {
-                            filePath.uploadAsImage(group).sendTo(group)
-                        }
                     }
                     table.deleteWhere { table.time eq (dayWithYear - 2) }
                 }
@@ -66,7 +61,9 @@ class RecorderCompleter(
                 it.groups.filter { everyGroup -> everyGroup.permitteeId.hasPermission(perm) }.forEach { group ->
                     val filePath = File("${pluginMain.dataFolder}/WordCloud").resolve("${group.id}_$dayWithYear")
                     group.sendMessage("今日词云")
+                    delay(500)
                     group.sendImage(filePath)
+                    delay((300 ..3000L).random())
                 }
             }
         }

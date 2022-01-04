@@ -19,7 +19,7 @@ class WordCloudRenderer(private val words: List<String>) {
 
     private fun List<String>.getWordCloud(): ByteArray {
         val frequencyAnalyzer = FrequencyAnalyzer()
-        frequencyAnalyzer.setWordFrequenciesToReturn(100)
+        frequencyAnalyzer.setWordFrequenciesToReturn(WordCloudConfig.wordLimit)
         frequencyAnalyzer.setMinWordLength(2)
         frequencyAnalyzer.setWordTokenizer(ChineseWordTokenizer())
 
@@ -27,7 +27,7 @@ class WordCloudRenderer(private val words: List<String>) {
         val dimension = Dimension(600, 600)
         val wordCloud = WordCloud(dimension, CollisionMode.PIXEL_PERFECT)
 
-        wordCloud.setKumoFont(KumoFont(fontOrigin[0]))
+        wordCloud.setKumoFont(KumoFont(fontOrigin.first()))
         wordCloud.setPadding(2)
         wordCloud.setColorPalette(
             ColorPalette(
