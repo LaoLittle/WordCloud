@@ -25,7 +25,7 @@ import java.time.LocalDate
 import java.util.*
 import javax.sql.DataSource
 
-object WordCloud : KotlinPlugin(
+object WordCloudPlugin : KotlinPlugin(
     JvmPluginDescription(
         id = "org.laolittle.plugin.WordCloud",
         name = "WordCloud",
@@ -53,7 +53,7 @@ object WordCloud : KotlinPlugin(
         task.run()
         WordCloudConfig.reload()
         logger.info { "配置文件已重载" }
-        GlobalEventChannel.subscribeOnce<BotOnlineEvent> { this@WordCloud.bot = bot }
+        GlobalEventChannel.subscribeOnce<BotOnlineEvent> { this@WordCloudPlugin.bot = bot }
         GlobalEventChannel.subscribeGroupMessages {
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
