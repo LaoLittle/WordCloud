@@ -75,6 +75,9 @@ object WordCloud : KotlinPlugin(
                 RecorderCompleter(wordCloudPerm).run()
                 WordCloudRenderer(words).wordCloud.toExternalResource().use { subject.sendImage(it) }
             }
+            "font"{
+                subject.sendMessage(WordCloudConfig.fontOrigin.toString())
+            }
         }
 
         val cacheTimer = object : TimerTask() {
