@@ -1,9 +1,6 @@
 package org.laolittle.plugin
 
 import com.alibaba.druid.pool.DruidDataSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.permission.PermissionService
 import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
@@ -16,7 +13,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.laolittle.plugin.RecorderCompleter.Companion.todayTimeMillis
 import java.sql.Connection
-import java.time.LocalDate
 import javax.sql.DataSource
 
 object WordCloud : KotlinPlugin(
@@ -30,7 +26,6 @@ object WordCloud : KotlinPlugin(
 ) {
     private val dataSource = DruidDataSource()
     val db: Database
-    var dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
     const val eight = 8 * 60 * 60 * 1000L
     val time = (WordCloudConfig.time) * 60 * 60 * 1000L
     var bot: Bot? = null
@@ -55,13 +50,6 @@ object WordCloud : KotlinPlugin(
 
 
     init {
-        launch(Dispatchers.IO) {
-            while (true) {
-                delay(10 * 60 * 60 * 1000)
-                logger.info { "time updated" }
-                dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
-            }
-        }
         dataSource.url = "jdbc:sqlite:$dataFolder/messageData.sqlite"
         dataSource.driverClassName = "org.sqlite.JDBC"
         TransactionManager.manager.defaultIsolationLevel =

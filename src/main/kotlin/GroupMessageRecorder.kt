@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.time.LocalDate
 import java.util.*
 
 /**
@@ -26,6 +27,7 @@ class GroupMessageRecorder(
 ) : TimerTask() {
     private var listener: Listener<GroupMessageEvent>? = null
     override fun run() {
+        val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
         WordCloud.logger.info { "Recorder has been successfully started" }
         listener = GlobalEventChannel.subscribeAlways(
             priority = EventPriority.MONITOR
@@ -40,7 +42,7 @@ class GroupMessageRecorder(
                             (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能")) && (single.content.isNotBlank())
                         if (filter)
                             database.insert { data ->
-                                data[time] = WordCloud.dayWithYear
+                                data[time] = dayWithYear
                                 data[content] = single.content
                             }
                     }
