@@ -2,8 +2,6 @@ package org.laolittle.plugin
 
 import kotlinx.coroutines.Dispatchers
 import net.mamoe.mirai.console.permission.Permission
-import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
-import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
 import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.Listener
@@ -12,7 +10,6 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.info
 import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -28,29 +25,27 @@ class GroupMessageRecorder(
     private var listener: Listener<GroupMessageEvent>? = null
     override fun run() {
         val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
-        WordCloud.logger.info { "Recorder has been successfully started" }
+        WordCloudPlugin.logger.info { "Recorder has been successfully started" }
         listener = GlobalEventChannel.subscribeAlways(
             priority = EventPriority.MONITOR
         ) {
-            if (subject.permitteeId.hasPermission(perm)) {
-                val database = MessageData(subject.id)
-                newSuspendedTransaction(Dispatchers.IO, WordCloud.db) {
-                    addLogger(StdOutSqlLogger)
-                    SchemaUtils.create(database)
-                    message.forEach { single ->
-                        val filter =
-                            (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能")) && (single.content.isNotBlank())
-                        if (filter)
-                            database.insert { data ->
-                                data[time] = dayWithYear
-                                data[content] = single.content
-                            }
-                    }
+            val database = MessageData(subject.id)
+            newSuspendedTransaction(Dispatchers.IO, WordCloudPlugin.db) {
+                addLogger(MiraiSqlLogger)
+                SchemaUtils.create(database)
+                message.forEach { single ->
+                    val filter =
+                        (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能")) && (single.content.isNotBlank())
+                    if (filter)
+                        database.insert { data ->
+                            data[time] = dayWithYear
+                            data[content] = single.content
+                        }
                 }
             }
         }
         val task = RecorderCompleter(perm, listener)
-        Timer().schedule(task, Date(RecorderCompleter.todayTimeMillis + WordCloud.time))
+        Timer().schedule(task, Date(RecorderCompleter.todayTimeMillis + WordCloudPlugin.time))
     }
 
     override fun cancel(): Boolean {

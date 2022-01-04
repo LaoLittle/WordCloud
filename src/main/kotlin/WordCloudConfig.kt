@@ -19,6 +19,6 @@ object WordCloudConfig : AutoSavePluginConfig("Config") {
     val time by value(18)
 
     val fontOrigin: Array<Font> =
-        (if (font == "default") Font.createFonts(WordCloud.javaClass.getResourceAsStream("/MiSans-Light.ttf"))
-        else Font.createFonts(WordCloud.dataFolder.resolve(font)))
+        (if (font == "default") Font.createFonts(WordCloudPlugin.javaClass.getResourceAsStream("/MiSans-Light.ttf"))
+        else Font.createFonts(WordCloudPlugin.dataFolder.resolve(font)))
 }
