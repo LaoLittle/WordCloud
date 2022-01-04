@@ -8,18 +8,14 @@ import com.kennycason.kumo.font.scale.SqrtFontScalar
 import com.kennycason.kumo.nlp.FrequencyAnalyzer
 import com.kennycason.kumo.nlp.tokenizers.ChineseWordTokenizer
 import com.kennycason.kumo.palette.ColorPalette
-import net.mamoe.mirai.utils.ExternalResource
-import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import org.laolittle.plugin.WordCloudConfig.fontOrigin
 import java.awt.Color
 import java.awt.Dimension
 import java.io.ByteArrayOutputStream
 
 class WordCloudRenderer(private val words: List<String>) {
-    val wordCloud: ExternalResource
-        get() {
-            return words.getWordCloud().toExternalResource()
-        }
+    val wordCloud: ByteArray
+        get() = words.getWordCloud()
 
     private fun List<String>.getWordCloud(): ByteArray {
         val frequencyAnalyzer = FrequencyAnalyzer()
