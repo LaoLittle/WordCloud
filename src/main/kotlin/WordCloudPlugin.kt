@@ -1,7 +1,6 @@
 package org.laolittle.plugin
 
 import com.alibaba.druid.pool.DruidDataSource
-import com.huaban.analysis.jieba.JiebaSegmenter
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.permission.PermissionService
 import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
@@ -11,10 +10,6 @@ import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.BotOnlineEvent
 import net.mamoe.mirai.event.subscribeGroupMessages
-import net.mamoe.mirai.event.subscribeMessages
-import net.mamoe.mirai.message.data.content
-import net.mamoe.mirai.message.nextMessage
-import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.info
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -60,23 +55,6 @@ object WordCloudPlugin : KotlinPlugin(
                 val imageFile = File("$dataFolder/WordCloud").resolve("${group.id}_$dayWithYear")
                 if (!imageFile.isFile) subject.sendMessage("还没有生成今日词云哦！${WordCloudConfig.time}点在来吧")
                 else subject.sendImage(imageFile)
-            }
-        }
-
-        GlobalEventChannel.subscribeMessages {
-            "tet"{
-                subject.sendMessage("plz input")
-                val inputMessage = nextMessage(30_000)
-                val foo = JiebaSegmenter().process(inputMessage.content, JiebaSegmenter.SegMode.SEARCH)
-                val words = mutableListOf<String>()
-                foo.forEach {
-                    words.add(it.word)
-                }
-                RecorderCompleter(wordCloudPerm).run()
-                WordCloudRenderer(words).wordCloud.toExternalResource().use { subject.sendImage(it) }
-            }
-            "font"{
-                subject.sendMessage(WordCloudConfig.fontOrigin.toString())
             }
         }
 

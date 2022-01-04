@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.permission.Permission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
+import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.message.data.sendTo
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
@@ -59,6 +60,13 @@ class RecorderCompleter(
                         }
                     }
                     table.deleteWhere { table.time eq (dayWithYear - 2) }
+                }
+            }
+            pluginMain.launch {
+                it.groups.filter { everyGroup -> everyGroup.permitteeId.hasPermission(perm) }.forEach { group ->
+                    val filePath = File("${pluginMain.dataFolder}/WordCloud").resolve("${group.id}_$dayWithYear")
+                    group.sendMessage("今日词云")
+                    group.sendImage(filePath)
                 }
             }
         }
