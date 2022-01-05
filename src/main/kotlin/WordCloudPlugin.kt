@@ -32,7 +32,7 @@ object WordCloudPlugin : KotlinPlugin(
     val db: Database
     val wordCloudDir = dataFolder.resolve("WordCloud")
     val time = (WordCloudConfig.time) * 60 * 60 * 1000L
-    lateinit var bot: Bot
+    var bot: Bot? = null
     override fun onEnable() {
         val wordCloudPerm = registerPermission(
             "monitor",
@@ -49,7 +49,7 @@ object WordCloudPlugin : KotlinPlugin(
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
                 val imageFile = File("$dataFolder/WordCloud").resolve("${group.id}_$dayWithYear")
-                if ((System.currentTimeMillis() < (todayTimeMillis + WordCloudPlugin.time))){
+                if ((System.currentTimeMillis() < (todayTimeMillis + WordCloudPlugin.time))) {
                     subject.sendMessage("还没有生成今日词云哦！${WordCloudConfig.time}点在来吧")
                     return@Here
                 }

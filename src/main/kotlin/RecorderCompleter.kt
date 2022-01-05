@@ -11,12 +11,12 @@ import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.utils.info
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.laolittle.plugin.JiebaSegmenter as JiebaObj
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.*
+import org.laolittle.plugin.JiebaSegmenter as JiebaObj
 import org.laolittle.plugin.WordCloudPlugin as pluginMain
 
 /**
@@ -34,7 +34,7 @@ class RecorderCompleter(
         val task = GroupMessageRecorder(perm)
         Timer().schedule(task, Date(todayTimeMillis + aDay))
         val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
-        pluginMain.bot.let {
+        pluginMain.bot?.let {
             //.filter { everyGroup -> everyGroup.permitteeId.hasPermission(perm) }
             it.groups.forEach { group ->
                 val table = MessageData(group.id)
@@ -64,7 +64,7 @@ class RecorderCompleter(
                         group.sendMessage("今日词云")
                         delay(500)
                         group.sendImage(filePath)
-                        delay((300 ..3000L).random())
+                        delay((300..3000L).random())
                     }
                 }
             }
