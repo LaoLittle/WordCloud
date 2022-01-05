@@ -39,9 +39,7 @@ object WordCloudPlugin : KotlinPlugin(
             "生成词云"
         )
         val now = System.currentTimeMillis()
-        val task = if ((now > (todayTimeMillis)) && (now < (todayTimeMillis + time))) GroupMessageRecorder(
-            wordCloudPerm
-        )
+        val task = if (now < (todayTimeMillis + time)) GroupMessageRecorder(wordCloudPerm)
         else RecorderCompleter(wordCloudPerm)
         task.run()
         WordCloudConfig.reload()

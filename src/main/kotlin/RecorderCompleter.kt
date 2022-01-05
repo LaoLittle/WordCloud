@@ -20,7 +20,7 @@ import java.util.*
 import org.laolittle.plugin.WordCloudPlugin as pluginMain
 
 /**
- * 负责创建定时任务在8点启用[GroupMessageRecorder]并读取数据库绘制词云
+ * 负责创建定时任务在0点启用[GroupMessageRecorder]并读取数据库绘制词云
  * @see WordCloudRenderer
  * */
 class RecorderCompleter(
