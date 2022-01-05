@@ -11,14 +11,12 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.BotOnlineEvent
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.utils.info
-import net.mamoe.mirai.utils.verbose
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.laolittle.plugin.RecorderCompleter.Companion.todayTimeMillis
 import java.io.File
 import java.sql.Connection
 import java.time.LocalDate
-import java.util.*
 import javax.sql.DataSource
 
 object WordCloudPlugin : KotlinPlugin(
@@ -32,17 +30,16 @@ object WordCloudPlugin : KotlinPlugin(
 ) {
     private val dataSource = DruidDataSource()
     val db: Database
-    private val wordCloudDir = dataFolder.resolve("WordCloud")
-    const val eight = 8 * 60 * 60 * 1000L
+    val wordCloudDir = dataFolder.resolve("WordCloud")
     val time = (WordCloudConfig.time) * 60 * 60 * 1000L
-    var bot: Bot? = null
+    lateinit var bot: Bot
     override fun onEnable() {
         val wordCloudPerm = registerPermission(
             "monitor",
             "生成词云"
         )
         val now = System.currentTimeMillis()
-        val task = if ((now > (todayTimeMillis + eight)) && (now < (todayTimeMillis + time))) GroupMessageRecorder(
+        val task = if ((now > (todayTimeMillis)) && (now < (todayTimeMillis + time))) GroupMessageRecorder(
             wordCloudPerm
         )
         else RecorderCompleter(wordCloudPerm)
@@ -54,21 +51,14 @@ object WordCloudPlugin : KotlinPlugin(
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
                 val imageFile = File("$dataFolder/WordCloud").resolve("${group.id}_$dayWithYear")
-                if (!imageFile.isFile) subject.sendMessage("还没有生成今日词云哦！${WordCloudConfig.time}点在来吧")
-                else subject.sendImage(imageFile)
-            }
-        }
-
-        val cacheTimer = object : TimerTask() {
-            override fun run() {
-                wordCloudDir.listFiles()?.forEach {
-                    if (it.isFile) it.delete()
+                if ((System.currentTimeMillis() < (todayTimeMillis + WordCloudPlugin.time))){
+                    subject.sendMessage("还没有生成今日词云哦！${WordCloudConfig.time}点在来吧")
+                    return@Here
                 }
-                logger.verbose { "缓存已清理" }
+                if (imageFile.isFile) subject.sendImage(imageFile)
+                else subject.sendMessage("貌似没办法生成词云呢，让群活跃一点好不好")
             }
         }
-        val aDay = 24 * 60 * 60 * 1000L
-        Timer().schedule(cacheTimer, Date(todayTimeMillis + aDay), aDay)
     }
 
     private fun AbstractJvmPlugin.registerPermission(name: String, description: String) =

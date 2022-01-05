@@ -27,14 +27,14 @@ class RecorderCompleter(
     private val perm: Permission,
     private val listener: Listener<*>? = null
 ) : TimerTask() {
+    private val aDay = 24 * 60 * 60 * 1000
     override fun run() {
         pluginMain.logger.info { "Drawer has been successfully started and waiting to start another recorder" }
         pluginMain.logger.info { "关闭监听器: ${listener?.complete() ?: false}" }
         val task = GroupMessageRecorder(perm)
-        val aDay = 24 * 60 * 60 * 1000
-        Timer().schedule(task, Date(todayTimeMillis + pluginMain.eight + aDay))
+        Timer().schedule(task, Date(todayTimeMillis + aDay))
         val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
-        pluginMain.bot?.let {
+        pluginMain.bot.let {
             //.filter { everyGroup -> everyGroup.permitteeId.hasPermission(perm) }
             it.groups.forEach { group ->
                 val table = MessageData(group.id)
@@ -60,10 +60,12 @@ class RecorderCompleter(
             pluginMain.launch {
                 it.groups.filter { everyGroup -> everyGroup.permitteeId.hasPermission(perm) }.forEach { group ->
                     val filePath = File("${pluginMain.dataFolder}/WordCloud").resolve("${group.id}_$dayWithYear")
-                    group.sendMessage("今日词云")
-                    delay(500)
-                    group.sendImage(filePath)
-                    delay((300 ..3000L).random())
+                    if (filePath.isFile) {
+                        group.sendMessage("今日词云")
+                        delay(500)
+                        group.sendImage(filePath)
+                        delay((300 ..3000L).random())
+                    }
                 }
             }
         }

@@ -9,6 +9,7 @@ import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.info
+import net.mamoe.mirai.utils.verbose
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.insert
@@ -26,6 +27,10 @@ class GroupMessageRecorder(
     override fun run() {
         val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
         WordCloudPlugin.logger.info { "Recorder has been successfully started" }
+        WordCloudPlugin.wordCloudDir.listFiles()?.forEach {
+            if (it.isFile) it.delete()
+        }
+        WordCloudPlugin.logger.verbose { "缓存已清理" }
         listener = GlobalEventChannel.subscribeAlways(
             priority = EventPriority.MONITOR
         ) {
