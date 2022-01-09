@@ -1,6 +1,5 @@
 package org.laolittle.plugin
 
-import com.huaban.analysis.jieba.JiebaSegmenter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.permission.Permission
@@ -16,7 +15,6 @@ import java.io.FileOutputStream
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.*
-import org.laolittle.plugin.JiebaSegmenter as JiebaObj
 import org.laolittle.plugin.WordCloudPlugin as pluginMain
 
 /**
@@ -46,7 +44,7 @@ class RecorderCompleter(
                     if (!results.empty()) {
                         val words = mutableListOf<String>()
                         results.forEach { single ->
-                            val foo = JiebaObj.process(single[table.content], JiebaSegmenter.SegMode.SEARCH)
+                            val foo = JiebaSegmenter.process(single[table.content], JiebaSegmenter.SegMode.SEARCH)
                             foo.forEach { bar ->
                                 words.add(bar.word)
                             }
