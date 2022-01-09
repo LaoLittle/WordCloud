@@ -2,6 +2,7 @@ package org.laolittle.plugin
 
 import com.alibaba.druid.pool.DruidDataSource
 import net.mamoe.mirai.Bot
+import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.permission.PermissionService
 import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
@@ -31,25 +32,24 @@ object WordCloudPlugin : KotlinPlugin(
     private val dataSource = DruidDataSource()
     val db: Database
     val wordCloudDir = dataFolder.resolve("WordCloud")
-    val time = (WordCloudConfig.time) * 60 * 60 * 1000L
     var bot: Bot? = null
     override fun onEnable() {
+        WordCloudConfig.reload()
+        ForceWordCloud.register()
         val wordCloudPerm = registerPermission(
             "monitor",
             "生成词云"
         )
-        val now = System.currentTimeMillis()
-        val task = if (now < (todayTimeMillis + time)) GroupMessageRecorder(wordCloudPerm)
+        val task = if (System.currentTimeMillis() < (todayTimeMillis + this.time)) GroupMessageRecorder(wordCloudPerm)
         else RecorderCompleter(wordCloudPerm)
         task.run()
-        WordCloudConfig.reload()
         logger.info { "配置文件已重载" }
         GlobalEventChannel.subscribeOnce<BotOnlineEvent> { this@WordCloudPlugin.bot = bot }
         GlobalEventChannel.subscribeGroupMessages {
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
                 val imageFile = File("$dataFolder/WordCloud").resolve("${group.id}_$dayWithYear")
-                if ((System.currentTimeMillis() < (todayTimeMillis + WordCloudPlugin.time))) {
+                if (System.currentTimeMillis() < (todayTimeMillis + WordCloudPlugin.time)) {
                     subject.sendMessage("还没有生成今日词云哦！${WordCloudConfig.time}点在来吧")
                     return@Here
                 }
@@ -61,6 +61,8 @@ object WordCloudPlugin : KotlinPlugin(
 
     private fun AbstractJvmPlugin.registerPermission(name: String, description: String) =
         PermissionService.INSTANCE.register(permissionId(name), description, parentPermission)
+
+    val time get() = (WordCloudConfig.time) * 60 * 60 * 1000L
 
     init {
         dataSource.url = "jdbc:sqlite:$dataFolder/messageData.sqlite"
