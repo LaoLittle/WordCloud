@@ -18,7 +18,7 @@ import java.time.LocalDate
 import java.util.*
 
 /**
- * 创建监听器监听群消息事件并写入数据库, 并创建定时任务在18点启用[RecorderCompleter]
+ * 创建监听器监听群消息事件并写入数据库, 并创建定时任务在[固定时间][WordCloudConfig.time]启用[RecorderCompleter]
  * */
 class GroupMessageRecorder(
     private val perm: Permission
