@@ -31,7 +31,7 @@ class GroupMessageRecorder(
             if (it.isFile) it.delete()
         }
         WordCloudPlugin.logger.verbose { "缓存已清理" }
-        listener = GlobalEventChannel.subscribeAlways(
+        listener = GlobalEventChannel.parentScope(WordCloudPlugin).context(WordCloudPlugin.coroutineContext).subscribeAlways(
             priority = EventPriority.MONITOR
         ) {
             val database = MessageData(subject.id)
