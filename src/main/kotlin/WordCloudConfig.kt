@@ -15,7 +15,7 @@ object WordCloudConfig : AutoSavePluginConfig("Config") {
     @ValueDescription("词数限制")
     val wordLimit by value(500)
 
-    @ValueDescription("指定字体文件 default为默认 (微软雅黑)")
+    @ValueDescription("指定字体文件 default为默认 (MiSans-Light)")
     val font by value("default")
 
     @ValueDescription("指定生成时间 (小时)")
