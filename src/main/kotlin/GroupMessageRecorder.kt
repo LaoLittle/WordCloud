@@ -1,19 +1,13 @@
 package org.laolittle.plugin
 
-import kotlinx.coroutines.Dispatchers
 import net.mamoe.mirai.console.permission.Permission
 import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.Listener
+import net.mamoe.mirai.event.broadcast
 import net.mamoe.mirai.event.events.GroupMessageEvent
-import net.mamoe.mirai.message.data.PlainText
-import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.utils.verbose
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.LocalDate
 import java.util.*
 
@@ -32,22 +26,9 @@ class GroupMessageRecorder(
         }
         WordCloudPlugin.logger.verbose { "缓存已清理" }
         listener = GlobalEventChannel.parentScope(WordCloudPlugin).context(WordCloudPlugin.coroutineContext).subscribeAlways(
-            priority = EventPriority.MONITOR
+            priority = EventPriority.HIGHEST
         ) {
-            val database = MessageData(subject.id)
-            newSuspendedTransaction(Dispatchers.IO, WordCloudPlugin.db) {
-                addLogger(MiraiSqlLogger)
-                SchemaUtils.create(database)
-                message.forEach { single ->
-                    val filter =
-                        (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能")) && (single.content.isNotBlank())
-                    if (filter)
-                        database.insert { data ->
-                            data[time] = dayWithYear
-                            data[content] = single.content
-                        }
-                }
-            }
+            MessageMonitorEvent(message, dayWithYear,subject).broadcast()
         }
         val task = RecorderCompleter(perm, listener)
         Timer().schedule(task, Date(RecorderCompleter.todayTimeMillis + WordCloudPlugin.time))

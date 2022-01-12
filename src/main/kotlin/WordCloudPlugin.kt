@@ -8,12 +8,18 @@ import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
-import net.mamoe.mirai.event.GlobalEventChannel
+import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.events.BotOnlineEvent
+import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.subscribeGroupMessages
+import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.info
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.laolittle.plugin.RecorderCompleter.Companion.todayTimeMillis
 import java.io.File
 import java.sql.Connection
@@ -44,8 +50,26 @@ object WordCloudPlugin : KotlinPlugin(
         else RecorderCompleter(wordCloudPerm)
         task.run()
         logger.info { "配置文件已重载" }
-        GlobalEventChannel.subscribeOnce<BotOnlineEvent> { this@WordCloudPlugin.bot = bot }
-        GlobalEventChannel.subscribeGroupMessages {
+        globalEventChannel().subscribeOnce<BotOnlineEvent> { this@WordCloudPlugin.bot = bot }
+        globalEventChannel().subscribeAlways<MessageMonitorEvent>(
+            priority = EventPriority.MONITOR
+        ) {
+            val database = MessageData(subject.id)
+            newSuspendedTransaction(kotlinx.coroutines.Dispatchers.IO, db) {
+                addLogger(MiraiSqlLogger)
+                org.jetbrains.exposed.sql.SchemaUtils.create(database)
+                message.forEach { single ->
+                    val filter =
+                        (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能")) && (single.content.isNotBlank())
+                    if (filter)
+                        database.insert { data ->
+                            data[time] = dayWithYear
+                            data[content] = single.content
+                        }
+                }
+            }
+        }
+        globalEventChannel().subscribeGroupMessages {
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
                 val imageFile = File("$dataFolder/WordCloud").resolve("${group.id}_$dayWithYear")
