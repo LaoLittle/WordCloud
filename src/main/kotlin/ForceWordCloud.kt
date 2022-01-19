@@ -28,6 +28,7 @@ object ForceWordCloud : SimpleCommand(
         val table = MessageData(fromEvent.subject.id)
         val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.date eq LocalDate.now() }
         newSuspendedTransaction(Dispatchers.IO, db = database) {
+            MessageDatabase.lock()
             SchemaUtils.create(table)
             val results = table.select(sql)
             if (!results.empty()) {
@@ -43,6 +44,7 @@ object ForceWordCloud : SimpleCommand(
                 }
                 WordCloudRenderer(words).wordCloud.toExternalResource().use { fromEvent.subject.sendImage(it) }
             }
+            MessageDatabase.unlock()
         }
 
     }

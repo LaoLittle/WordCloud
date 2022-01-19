@@ -35,6 +35,7 @@ class RecorderCompleter(
             val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.date eq LocalDate.now() }
             val filePath = wordCloudDir.resolve("${id}_$dayWithYear")
             transaction(database) {
+                MessageDatabase.lock()
                 SchemaUtils.create(table)
                 val results = table.select(sql)
                 if (!results.empty()) {
@@ -49,6 +50,7 @@ class RecorderCompleter(
                     file.write(WordCloudRenderer(words).wordCloud)
                 }
                 table.deleteWhere { table.date eq LocalDate.ofYearDay(LocalDate.now().year, LocalDate.now().dayOfYear - 2) }
+                MessageDatabase.unlock()
             }
         }
         pluginMain.launch {
