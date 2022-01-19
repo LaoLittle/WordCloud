@@ -9,6 +9,7 @@ import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.utils.verbose
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.laolittle.plugin.MessageDatabase.database
 import java.io.FileOutputStream
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -33,7 +34,7 @@ class RecorderCompleter(
             val table = MessageData(id)
             val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.date eq LocalDate.now() }
             val filePath = wordCloudDir.resolve("${id}_$dayWithYear")
-            transaction(db = database) {
+            transaction(database) {
                 SchemaUtils.create(table)
                 val results = table.select(sql)
                 if (!results.empty()) {
