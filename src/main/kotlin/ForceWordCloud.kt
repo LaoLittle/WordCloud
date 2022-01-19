@@ -46,6 +46,5 @@ object ForceWordCloud : SimpleCommand(
             }
             MessageDatabase.unlock()
         }
-
     }
 }
