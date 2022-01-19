@@ -2,6 +2,7 @@ package org.laolittle.plugin
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.permission.Permission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
@@ -34,23 +35,25 @@ class RecorderCompleter(
             val table = MessageData(id)
             val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.date eq LocalDate.now() }
             val filePath = wordCloudDir.resolve("${id}_$dayWithYear")
-            transaction(database) {
-                MessageDatabase.lock()
-                SchemaUtils.create(table)
-                val results = table.select(sql)
-                if (!results.empty()) {
-                    val words = mutableListOf<String>()
-                    results.forEach { single ->
-                        val foo = JiebaSegmenter.process(single[table.content], JiebaSegmenter.SegMode.SEARCH)
-                        foo.forEach { bar ->
-                            words.add(bar.word)
+            runBlocking {
+                MessageDatabase.alsoLock {
+                    transaction(database) {
+                        SchemaUtils.create(table)
+                        val results = table.select(sql)
+                        if (!results.empty()) {
+                            val words = mutableListOf<String>()
+                            results.forEach { single ->
+                                val foo = JiebaSegmenter.process(single[table.content], JiebaSegmenter.SegMode.SEARCH)
+                                foo.forEach { bar ->
+                                    words.add(bar.word)
+                                }
+                            }
+                            val file = FileOutputStream(filePath)
+                            file.write(WordCloudRenderer(words).wordCloud)
                         }
+                        table.deleteWhere { table.date eq LocalDate.ofYearDay(LocalDate.now().year, LocalDate.now().dayOfYear - 2) }
                     }
-                    val file = FileOutputStream(filePath)
-                    file.write(WordCloudRenderer(words).wordCloud)
                 }
-                table.deleteWhere { table.date eq LocalDate.ofYearDay(LocalDate.now().year, LocalDate.now().dayOfYear - 2) }
-                MessageDatabase.unlock()
             }
         }
         pluginMain.launch {
