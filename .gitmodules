@@ -1,0 +1,3 @@
+[submodule "MessageRecorder"]
+	path = MessageRecorder
+	url = https://github.com/LaoLittle/MessageRecorder.git
