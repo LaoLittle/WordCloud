@@ -20,17 +20,20 @@ object ForceWordCloud : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun CommandSenderOnMessage<GroupMessageEvent>.render(){
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.render() {
         val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
         val table = MessageData(fromEvent.subject.id)
         val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.time eq dayWithYear }
-        newSuspendedTransaction(Dispatchers.IO ,db = WordCloudPlugin.db) {
+        newSuspendedTransaction(Dispatchers.IO, db = WordCloudPlugin.db) {
             SchemaUtils.create(table)
             val results = table.select(sql)
             if (!results.empty()) {
                 val words = mutableListOf<String>()
                 results.forEach { single ->
-                    val foo = JiebaSegmenter.process(single[table.content], com.huaban.analysis.jieba.JiebaSegmenter.SegMode.SEARCH)
+                    val foo = JiebaSegmenter.process(
+                        single[table.content],
+                        com.huaban.analysis.jieba.JiebaSegmenter.SegMode.SEARCH
+                    )
                     foo.forEach { bar ->
                         words.add(bar.word)
                     }

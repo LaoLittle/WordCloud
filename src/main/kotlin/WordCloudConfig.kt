@@ -3,6 +3,7 @@ package org.laolittle.plugin
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.event.EventPriority
 import java.awt.Font
 
 object WordCloudConfig : AutoSavePluginConfig("Config") {
@@ -20,6 +21,12 @@ object WordCloudConfig : AutoSavePluginConfig("Config") {
 
     @ValueDescription("指定生成时间 (小时)")
     val time by value(18)
+
+    @ValueDescription("""
+        监听优先级
+        顺序分别为 HIGHEST -> HIGH -> NORMAL -> LOW -> LOWEST -> MONITOR
+        """)
+    val priority by value(EventPriority.MONITOR)
 
     val fontOrigin: Array<Font> =
         (if (font == "default") Font.createFonts(WordCloudPlugin.javaClass.getResourceAsStream("/MiSans-Light.ttf"))

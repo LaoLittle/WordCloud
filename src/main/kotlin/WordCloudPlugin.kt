@@ -1,6 +1,7 @@
 package org.laolittle.plugin
 
 import com.alibaba.druid.pool.DruidDataSource
+import io.ktor.util.date.*
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.permission.PermissionService
@@ -46,7 +47,7 @@ object WordCloudPlugin : KotlinPlugin(
             "monitor",
             "生成词云"
         )
-        val task = if (System.currentTimeMillis() < (todayTimeMillis + this.time)) GroupMessageRecorder(wordCloudPerm)
+        val task = if (getTimeMillis() < (todayTimeMillis + this.time)) GroupMessageRecorder(wordCloudPerm)
         else RecorderCompleter(wordCloudPerm)
         task.run()
         logger.info { "配置文件已重载" }
@@ -73,7 +74,7 @@ object WordCloudPlugin : KotlinPlugin(
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
                 val imageFile = File("$dataFolder/WordCloud").resolve("${group.id}_$dayWithYear")
-                if (System.currentTimeMillis() < (todayTimeMillis + WordCloudPlugin.time)) {
+                if (getTimeMillis() < (todayTimeMillis + WordCloudPlugin.time)) {
                     subject.sendMessage("还没有生成今日词云哦！${WordCloudConfig.time}点在来吧")
                     return@Here
                 }

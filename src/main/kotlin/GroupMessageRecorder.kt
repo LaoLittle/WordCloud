@@ -1,7 +1,6 @@
 package org.laolittle.plugin
 
 import net.mamoe.mirai.console.permission.Permission
-import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.event.broadcast
@@ -25,11 +24,12 @@ class GroupMessageRecorder(
             if (it.isFile) it.delete()
         }
         WordCloudPlugin.logger.verbose { "缓存已清理" }
-        listener = GlobalEventChannel.parentScope(WordCloudPlugin).context(WordCloudPlugin.coroutineContext).subscribeAlways(
-            priority = EventPriority.HIGHEST
-        ) {
-            MessageMonitorEvent(message, dayWithYear,subject).broadcast()
-        }
+        listener =
+            GlobalEventChannel.parentScope(WordCloudPlugin).context(WordCloudPlugin.coroutineContext).subscribeAlways(
+                priority = WordCloudConfig.priority
+            ) {
+                MessageMonitorEvent(message, dayWithYear, subject).broadcast()
+            }
         val task = RecorderCompleter(perm, listener)
         Timer().schedule(task, Date(RecorderCompleter.todayTimeMillis + WordCloudPlugin.time))
     }
