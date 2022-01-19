@@ -1,6 +1,5 @@
 package org.laolittle.plugin
 
-import com.alibaba.druid.pool.DruidDataSource
 import io.ktor.util.date.*
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
@@ -9,23 +8,16 @@ import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
-import net.mamoe.mirai.event.EventPriority
+import net.mamoe.mirai.event.events.BotJoinGroupEvent
+import net.mamoe.mirai.event.events.BotLeaveEvent
 import net.mamoe.mirai.event.events.BotOnlineEvent
+import net.mamoe.mirai.event.events.MemberLeaveEvent
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.subscribeGroupMessages
-import net.mamoe.mirai.message.data.PlainText
-import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.info
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.laolittle.plugin.RecorderCompleter.Companion.todayTimeMillis
 import java.io.File
-import java.sql.Connection
 import java.time.LocalDate
-import javax.sql.DataSource
 
 object WordCloudPlugin : KotlinPlugin(
     JvmPluginDescription(
@@ -36,10 +28,6 @@ object WordCloudPlugin : KotlinPlugin(
         author("LaoLittle")
     }
 ) {
-    private val dataSource = DruidDataSource()
-    val db: Database
-    val wordCloudDir = dataFolder.resolve("WordCloud")
-    var bot: Bot? = null
     override fun onEnable() {
         WordCloudConfig.reload()
         ForceWordCloud.register()
@@ -51,24 +39,20 @@ object WordCloudPlugin : KotlinPlugin(
         else RecorderCompleter(wordCloudPerm)
         task.run()
         logger.info { "配置文件已重载" }
-        globalEventChannel().subscribeOnce<BotOnlineEvent> { this@WordCloudPlugin.bot = bot }
-        globalEventChannel().subscribeAlways<MessageMonitorEvent>(
-            priority = EventPriority.MONITOR
-        ) {
-            val database = MessageData(subject.id)
-            newSuspendedTransaction(kotlinx.coroutines.Dispatchers.IO, db) {
-                addLogger(MiraiSqlLogger)
-                org.jetbrains.exposed.sql.SchemaUtils.create(database)
-                message.forEach { single ->
-                    val filter =
-                        (single is PlainText) && (!single.content.contains("请使用最新版手机QQ体验新功能")) && (single.content.isNotBlank())
-                    if (filter)
-                        database.insert { data ->
-                            data[time] = dayWithYear
-                            data[content] = single.content
-                        }
-                }
+        globalEventChannel().subscribeOnce<BotOnlineEvent> {
+            bot.groups.forEach { group ->
+                bots.add(bot)
+                groups.add(group.id)
             }
+        }
+        globalEventChannel().subscribeAlways<BotJoinGroupEvent> {
+            groups.add(groupId)
+        }
+        globalEventChannel().subscribeAlways<BotLeaveEvent> {
+            groups.remove(groupId)
+        }
+        globalEventChannel().subscribeAlways<MemberLeaveEvent> {
+            if (member as Bot in bots && groupId !in groups) groups.add(groupId)
         }
         globalEventChannel().subscribeGroupMessages {
             "今日词云" Here@{
@@ -90,11 +74,6 @@ object WordCloudPlugin : KotlinPlugin(
     val time get() = (WordCloudConfig.time) * 60 * 60 * 1000L
 
     init {
-        dataSource.url = "jdbc:sqlite:$dataFolder/messageData.sqlite"
-        dataSource.driverClassName = "org.sqlite.JDBC"
-        TransactionManager.manager.defaultIsolationLevel =
-            Connection.TRANSACTION_SERIALIZABLE
-        db = Database.connect(dataSource as DataSource)
         if (!wordCloudDir.isDirectory) wordCloudDir.mkdir()
     }
 }
