@@ -8,7 +8,10 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.LocalDate
 
@@ -21,10 +24,9 @@ object ForceWordCloud : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.render() {
-        val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
         val table = MessageData(fromEvent.subject.id)
-        val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.time eq dayWithYear }
-        newSuspendedTransaction(Dispatchers.IO, db = WordCloudPlugin.db) {
+        val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.date eq LocalDate.now() }
+        newSuspendedTransaction(Dispatchers.IO, db = database) {
             SchemaUtils.create(table)
             val results = table.select(sql)
             if (!results.empty()) {
@@ -32,7 +34,7 @@ object ForceWordCloud : SimpleCommand(
                 results.forEach { single ->
                     val foo = JiebaSegmenter.process(
                         single[table.content],
-                        com.huaban.analysis.jieba.JiebaSegmenter.SegMode.SEARCH
+                        JiebaSegmenter.SegMode.SEARCH
                     )
                     foo.forEach { bar ->
                         words.add(bar.word)
@@ -40,7 +42,6 @@ object ForceWordCloud : SimpleCommand(
                 }
                 WordCloudRenderer(words).wordCloud.toExternalResource().use { fromEvent.subject.sendImage(it) }
             }
-            table.deleteWhere { table.time eq (dayWithYear - 2) }
         }
 
     }
