@@ -8,15 +8,11 @@ import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
-import net.mamoe.mirai.event.events.BotJoinGroupEvent
-import net.mamoe.mirai.event.events.BotLeaveEvent
-import net.mamoe.mirai.event.events.BotOnlineEvent
-import net.mamoe.mirai.event.events.MemberLeaveEvent
+import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.utils.info
 import org.laolittle.plugin.RecorderCompleter.Companion.todayTimeMillis
-import java.io.File
 import java.time.LocalDate
 
 object WordCloudPlugin : KotlinPlugin(
@@ -39,11 +35,14 @@ object WordCloudPlugin : KotlinPlugin(
         else RecorderCompleter(wordCloudPerm)
         task.run()
         logger.info { "配置文件已重载" }
-        globalEventChannel().subscribeOnce<BotOnlineEvent> {
+        globalEventChannel().subscribeAlways<BotOnlineEvent> {
             bot.groups.forEach { group ->
                 bots.add(bot)
                 groups.add(group.id)
             }
+        }
+        globalEventChannel().subscribeAlways<BotOfflineEvent> {
+            bots.remove(bot)
         }
         globalEventChannel().subscribeAlways<BotJoinGroupEvent> {
             groups.add(groupId)
@@ -52,12 +51,12 @@ object WordCloudPlugin : KotlinPlugin(
             groups.remove(groupId)
         }
         globalEventChannel().subscribeAlways<MemberLeaveEvent> {
-            if (member as Bot in bots && groupId !in groups) groups.add(groupId)
+            if (member as? Bot in bots && groupId !in groups) groups.add(groupId)
         }
         globalEventChannel().subscribeGroupMessages {
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
-                val imageFile = File("$dataFolder/WordCloud").resolve("${group.id}_$dayWithYear")
+                val imageFile = wordCloudDir.resolve("${group.id}_$dayWithYear")
                 if (getTimeMillis() < (todayTimeMillis + WordCloudPlugin.time)) {
                     subject.sendMessage("还没有生成今日词云哦！${WordCloudConfig.time}点在来吧")
                     return@Here
