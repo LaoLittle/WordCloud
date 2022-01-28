@@ -33,7 +33,7 @@ class RecorderCompleter(
         //.filter { everyGroup -> everyGroup.permitteeId.hasPermission(perm) }
         groups.forEach { id ->
             val table = MessageData(id)
-            val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.date eq LocalDate.now() }
+            val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.time greaterEq LocalDate.now() }
             val filePath = wordCloudDir.resolve("${id}_$dayWithYear")
             runBlocking {
                 MessageDatabase.alsoLock {
@@ -51,7 +51,7 @@ class RecorderCompleter(
                             val file = FileOutputStream(filePath)
                             file.write(WordCloudRenderer(words).wordCloud)
                         }
-                        table.deleteWhere { table.date eq LocalDate.ofYearDay(LocalDate.now().year, LocalDate.now().dayOfYear - 2) }
+                        table.deleteWhere { table.time lessEq LocalDate.now().minusDays(2) }
                     }
                 }
             }
