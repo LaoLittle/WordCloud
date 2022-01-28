@@ -59,8 +59,8 @@ class RecorderCompleter(
         pluginMain.launch {
             val completedGroups = mutableListOf<Long>()
             bots.forEach { bot ->
-                bot.groups.filter { group -> group.permitteeId.hasPermission(perm) && group.id !in completedGroups }.forEach { group ->
-                    val filePath = wordCloudDir.resolve("${group}_$dayWithYear")
+                bot.groups.filter { group -> group.permitteeId.hasPermission(perm) && (group.id !in completedGroups) }.forEach { group ->
+                    val filePath = wordCloudDir.resolve("${group.id}_$dayWithYear")
                     if (filePath.isFile) {
                         group.sendMessage("今日词云")
                         delay(500)
