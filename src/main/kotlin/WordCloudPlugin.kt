@@ -25,6 +25,11 @@ object WordCloudPlugin : KotlinPlugin(
     }
 ) {
     override fun onEnable() {
+        val osName = System.getProperties().getProperty("os.name")
+        if (!osName.startsWith("Windows")) {
+            logger.info { "检测到当前为${osName}系统，将使用headless模式" }
+            System.setProperty("java.awt.headless", "true")
+        }
         WordCloudConfig.reload()
         ForceWordCloud.register()
         val wordCloudPerm = registerPermission(
