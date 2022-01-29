@@ -4,6 +4,7 @@ import io.ktor.util.date.*
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.permission.PermissionService
+import net.mamoe.mirai.console.plugin.description.PluginDependency
 import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
@@ -22,6 +23,11 @@ object WordCloudPlugin : KotlinPlugin(
         version = "1.1",
     ) {
         author("LaoLittle")
+
+        dependsOn(
+            PluginDependency("org.laolittle.plugin.MessageRecorder", ">= 1.1", true),
+            PluginDependency("org.laolittle.plugin.implementation", ">= 1.0.1", true)
+        )
     }
 ) {
     override fun onEnable() {

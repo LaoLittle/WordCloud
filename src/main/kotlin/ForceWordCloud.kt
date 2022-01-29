@@ -26,7 +26,7 @@ object ForceWordCloud : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.render() {
         val table = MessageData(fromEvent.subject.id)
-        val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.time greaterEq LocalDate.now() }
+        val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.time greaterEq LocalDate.now().atStartOfDay() }
         newSuspendedTransaction(Dispatchers.IO, db = database) {
             MessageDatabase.lock()
             SchemaUtils.create(table)
