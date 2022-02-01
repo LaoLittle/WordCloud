@@ -2,7 +2,6 @@ package org.laolittle.plugin
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.permission.Permission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
@@ -28,48 +27,56 @@ class RecorderCompleter(
     override fun run() {
         pluginMain.logger.verbose { "Drawer has been successfully started and waiting to start another recorder" }
         val task = GroupMessageRecorder(perm)
-        Timer().schedule(task, Date(todayTimeMillis + aDay))
+        Timer().schedule(task, Date(todayTimeMillis + aDay + 1000))
         val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
         //.filter { everyGroup -> everyGroup.permitteeId.hasPermission(perm) }
-        groups.forEach { id ->
-            val table = MessageData(id)
-            val sql: SqlExpressionBuilder.() -> Op<Boolean> = { table.time greaterEq LocalDate.now().atStartOfDay() }
-            val filePath = wordCloudDir.resolve("${id}_$dayWithYear")
-            runBlocking {
-                MessageDatabase.alsoLock {
-                    transaction(database) {
-                        SchemaUtils.create(table)
-                        val results = table.select(sql)
-                        if (!results.empty()) {
-                            val words = mutableListOf<String>()
-                            results.forEach { single ->
-                                val foo = JiebaSegmenter.process(single[table.content], JiebaSegmenter.SegMode.SEARCH)
-                                foo.forEach { bar ->
-                                    words.add(bar.word)
-                                }
-                            }
-                            val file = FileOutputStream(filePath)
-                            file.write(WordCloudRenderer(words).wordCloud)
-                        }
-                        table.deleteWhere { table.time lessEq LocalDate.now().minusDays(2).atStartOfDay() }
-                    }
+        val groups = mutableSetOf<Long>().apply {
+            bots.forEach {
+                it.groups.forEach { group ->
+                    add(group.id)
                 }
             }
         }
-        pluginMain.launch {
-            val completedGroups = mutableListOf<Long>()
-            bots.forEach { bot ->
-                bot.groups.filter { group -> group.permitteeId.hasPermission(perm) && (group.id !in completedGroups) }.forEach { group ->
-                    val filePath = wordCloudDir.resolve("${group.id}_$dayWithYear")
-                    if (filePath.isFile) {
-                        group.sendMessage("今日词云")
-                        delay(500)
-                        group.sendImage(filePath)
-                        delay((300..3000L).random())
+
+        groups.forEach { id ->
+            runCatching {
+                val table = MessageData(id)
+                val sql: SqlExpressionBuilder.() -> Op<Boolean> =
+                    { table.time greaterEq LocalDate.now().atStartOfDay() }
+                val filePath = wordCloudDir.resolve("${id}_$dayWithYear")
+                pluginMain.launch(pluginMain.coroutineContext) {
+                    MessageDatabase.alsoLock {
+                        transaction(database) {
+                            SchemaUtils.create(table)
+                            val results = table.select(sql)
+                            if (!results.empty()) {
+                                val words = mutableListOf<String>()
+                                results.forEach { single ->
+                                    val foo =
+                                        JiebaSegmenter.process(single[table.content], JiebaSegmenter.SegMode.SEARCH)
+                                    foo.forEach { bar ->
+                                        words.add(bar.word)
+                                    }
+                                }
+                                val file = FileOutputStream(filePath)
+                                file.write(WordCloudRenderer(words).wordCloud)
+                            }
+                            table.deleteWhere { table.time lessEq LocalDate.now().minusDays(2).atStartOfDay() }
+                        }
                     }
-                    completedGroups.add(group.id)
+                    for (bot in bots) {
+                        val g = bot.getGroup(id) ?: continue
+                        if (g.permitteeId.hasPermission(perm)) {
+                            if (filePath.isFile) {
+                                g.sendMessage("今日词云")
+                                delay(500)
+                                g.sendImage(filePath)
+                                delay((300..3000L).random())
+                            }
+                        } else break
+                    }
                 }
-            }
+            }.onFailure { pluginMain.logger.error(it) }
         }
     }
 

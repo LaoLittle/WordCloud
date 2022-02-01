@@ -2,8 +2,10 @@ package org.laolittle.plugin
 
 import net.mamoe.mirai.Bot
 
-val wordCloudDir = WordCloudPlugin.dataFolder.resolve("WordCloud")
+internal val wordCloudDir = WordCloudPlugin.dataFolder.resolve("WordCloud")
 
-val groups = mutableSetOf<Long>()
+internal val backgroundDir = WordCloudPlugin.dataFolder.resolve("Background")
 
-val bots = mutableSetOf<Bot>()
+internal val bots by Bot.Companion::instances
+
+internal fun buildWordCloud(block: WordCloudBuilder.() -> Unit) = WordCloudBuilder().apply(block).build()

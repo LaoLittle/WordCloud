@@ -1,15 +1,14 @@
 package org.laolittle.plugin
 
 import io.ktor.util.date.*
-import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
+import net.mamoe.mirai.console.permission.Permission
 import net.mamoe.mirai.console.permission.PermissionService
 import net.mamoe.mirai.console.plugin.description.PluginDependency
 import net.mamoe.mirai.console.plugin.jvm.AbstractJvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
-import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.utils.info
@@ -30,7 +29,14 @@ object WordCloudPlugin : KotlinPlugin(
         )
     }
 ) {
+    lateinit var wordCloudPerm: Permission
+
     override fun onEnable() {
+        wordCloudPerm = registerPermission(
+            "monitor",
+            "生成词云"
+        )
+
         val osName = System.getProperties().getProperty("os.name")
         if (!osName.startsWith("Windows")) {
             logger.info { "检测到当前为${osName}系统，将使用headless模式" }
@@ -38,32 +44,11 @@ object WordCloudPlugin : KotlinPlugin(
         }
         WordCloudConfig.reload()
         ForceWordCloud.register()
-        val wordCloudPerm = registerPermission(
-            "monitor",
-            "生成词云"
-        )
+        SendWordCloud.register()
         val task = if (getTimeMillis() < (todayTimeMillis + this.time)) GroupMessageRecorder(wordCloudPerm)
         else RecorderCompleter(wordCloudPerm)
         task.run()
         logger.info { "配置文件已重载" }
-        globalEventChannel().subscribeAlways<BotOnlineEvent> {
-            bot.groups.forEach { group ->
-                bots.add(bot)
-                groups.add(group.id)
-            }
-        }
-        globalEventChannel().subscribeAlways<BotOfflineEvent> {
-            bots.remove(bot)
-        }
-        globalEventChannel().subscribeAlways<BotJoinGroupEvent> {
-            groups.add(groupId)
-        }
-        globalEventChannel().subscribeAlways<BotLeaveEvent> {
-            groups.remove(groupId)
-        }
-        globalEventChannel().subscribeAlways<MemberLeaveEvent> {
-            if (member as? Bot in bots && groupId !in groups) groups.add(groupId)
-        }
         globalEventChannel().subscribeGroupMessages {
             "今日词云" Here@{
                 val dayWithYear = "${LocalDate.now().year}${LocalDate.now().dayOfYear}".toInt()
